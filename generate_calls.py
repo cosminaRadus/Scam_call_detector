@@ -9,12 +9,6 @@ faker = Faker()
 def generate_repeated_calls():
     return random.random() < 0.15  
 
-def is_odd_hour():
-    hour = random.randint(1, 24)
-    if hour >= 1 and hour <= 4:  # 1 AM to 4 AM
-        return True
-    return False
-
 def generate_call_data():
 
     call_data = {
@@ -23,8 +17,7 @@ def generate_call_data():
         "destination_number": faker.phone_number(),  
         "call_duration": random.randint(1, 1200),  
         "start_time": time.time() - random.randint(1, 1000000), 
-        "source_location": faker.city(),  
-        "scam_flag": None
+        "source_location": faker.city()
     }
 
     return call_data
@@ -48,12 +41,6 @@ def send_to_kafka():
             call_data["call_duration"] = max(1, call_data["call_duration"] + random.randint(-10, 10))
         else:
             call_data = generate_call_data()
-        
-        odd_hour = is_odd_hour()
-        if repeat_call or odd_hour:
-            call_data["scam_flag"] = 1 if random.random() < 0.7 else 0
-        else:
-            call_data["scam_flag"] = 0 if random.random() < 0.8 else 1
     
         last_call = call_data
 
