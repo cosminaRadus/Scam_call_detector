@@ -11,7 +11,7 @@ consumer = KafkaConsumer(
 )
 
 storage_client = storage.Client()
-bucket = storage_client.bucket("calls_bucket_detector")
+bucket = storage_client.bucket("calls_detector_bucket_eu")
 
 message_batch = []
 
@@ -30,9 +30,8 @@ def write_batch_to_gsc(batch_data):
             batch_data_decoded.append(json.loads(decoded_msg))
 
     if batch_data_decoded:
-        blob.upload_from_string(json.dumps(batch_data_decoded), content_type='application/json')
+        blob.upload_from_string(json.dumps(batch_data_decoded), content_type='json')
         print(f"Uploaded data to GCS: {blob_name}")
-
 
 flush_interval = 10   # 1 hour
 last_flush_time = time.time()

@@ -7,9 +7,7 @@ import json
 faker = Faker()
 
 def generate_repeated_calls():
-    if random.random() < 0.2:
-        return True
-    return False
+    return random.random() < 0.2  
 
 def is_odd_hour():
     hour = random.randint(1, 24)
@@ -19,9 +17,6 @@ def is_odd_hour():
 
 def generate_call_data():
 
-    reteated_call = generate_repeated_calls()
-    odd_hour = is_odd_hour()
-
     call_data = {
         "call_id": faker.uuid4(),
         "source_no": faker.phone_number(),
@@ -29,12 +24,8 @@ def generate_call_data():
         "call_duration": random.randint(1, 1200),  
         "start_time": time.time(), 
         "source_location": faker.city(),  
+        "scam_flag": None
     }
-
-    if reteated_call or odd_hour:
-        call_data["scam_flag"] = 1 if random.random() < 0.7 else 0
-    else:
-        call_data["scam_flag"] = 0 if random.random() < 0.8 else 1
 
     return call_data
 
@@ -43,14 +34,25 @@ producer = KafkaProducer(
     value_serializer=lambda x: json.dumps(x).encode('utf-8')
 )
 
-# calls = [generate_call_data() for _ in range(20)]
-# for call in calls:
-#     print(json.dumps(call, indent=4))
-
-
 def send_to_kafka():
+    last_call = None
+
     while True:
-        call_data = generate_call_data()
+        repeat_call = generate_repeated_calls()
+
+        if repeat_call and last_call is not None:
+            call_data = last_call.copy()
+        else:
+            call_data = generate_call_data()
+        
+        odd_hour = is_odd_hour()
+        if repeat_call or odd_hour:
+            call_data["scam_flag"] = 1 if random.random() < 0.7 else 0
+        else:
+            call_data["scam_flag"] = 0 if random.random() < 0.8 else 1
+
+        last_call = call_data
+
         producer.send("calls_topic", call_data)
         print("Sent")
         print(json.dumps(call_data, indent=4))
