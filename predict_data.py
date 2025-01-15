@@ -39,33 +39,24 @@ X_new = np.array([row['scaledFeatures'].toArray() for index, row in pandas_new_d
 
 y_new_pred = knn_loaded.predict(X_new)
 
-print(f"ALO new predictions: {y_new_pred[:70]}")
 
 df_new_transformed = df_new_transformed.withColumn(
     "scam_flag", 
     lit(None).cast("int")  # Placeholder for predictions
 )
 
-# Map predictions to new rows by creating a new column using monotonically_increasing_id
 window_df = Window.orderBy(lit(1))
 df_with_predictions = df_new_transformed.withColumn(
     "prediction_index", row_number().over(window_df)
 )
 
-#df_with_predictions.show()
-
-# Create a DataFrame from the predictions and map the index to the DataFrame rows
 predictions_df = pd.DataFrame({"scam_flag": y_new_pred})
 predictions_spark_df = spark.createDataFrame(predictions_df)
 
-window_pred = Window.orderBy(lit(1))  # Order by a constant to ensure row_number is applied sequentially
+window_pred = Window.orderBy(lit(1))  
 
 predictions_spark_df = predictions_spark_df.withColumn("prediction_index", row_number().over(window_pred))
 
-
-#predictions_spark_df.show()
-
-# Join the predictions with the original DataFrame
 df_new_transformed_with_preds = df_with_predictions.join(
     predictions_spark_df,
     df_with_predictions["prediction_index"] == predictions_spark_df["prediction_index"],
@@ -73,10 +64,6 @@ df_new_transformed_with_preds = df_with_predictions.join(
 ).drop(df_with_predictions["scam_flag"])
 
 df_new_transformed_with_preds = df_new_transformed_with_preds.select("call_id", "call_duration", "source_location", "source_no",  "call_duration_category", "is_repeated", "hour_of_day", "is_odd_hour", predictions_spark_df.scam_flag.alias("scam_flag"))
-
-
-# Show the final DataFrame with predictions
-#df_new_transformed_with_preds.show()
 
 project_id = "potent-app-439210-c8"
 dataset_id = "scam_call_detector"
