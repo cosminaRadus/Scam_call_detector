@@ -67,4 +67,4 @@ predict_data = PythonOperator(
     dag=dag
 )
 
-generate_calls >> store_data_to_gcs >> store_data_to_bigquery >> train_model >> predict_data
+generate_calls >> store_data_to_gcs >> store_data_to_bigquery >> train_model >> predict_data 
